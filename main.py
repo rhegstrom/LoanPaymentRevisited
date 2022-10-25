@@ -2,62 +2,110 @@
 """
 Created on Mon Sep 12 21:11:35 2022
 
-@author: rhegstrom
+@author: Roger Hegstrom(rhegstrom@avc.edu)
+
+We want to construct a class called 'loan'
+
+in this class I want 4 functions:
+
+1  given PV, nMonths, intAPR, compute the monthly payment   name this function computePmt(PV, intAPR, nMonths)
+2  given PV, nMonths and monthly payment, Pmt, compute intAPR  name this function compute_intAPR(PV, nMonths, Pmt)
+3. given PV, Pmt, intAPR compute the number of months, nMonths name this function compute_nMonths(PV, Pmt, intAPR)
+4. given Pmt, intApr, nMonths compute PV, name this function computePV(Pmt, intAPR, nMonths)
+
+For example if I wanted to compute Pmt I would use loan.computePmt(PV, intAPR, nMonths)
+
 """
 
 import numpy as np
 import math
 
 class loanpy(object):
-    def __init__ (self, name):  # initialize with a name, thie permits
-                                # easier manamgement of multiple instances
+    def __init__ (self): 
+        return None
+       
+    def compute_Pmt(self, amt, apr, term):
         """
-        loanpy is a class object to implement computations of 
-        loan parameters
-        
-        name documents data set
+        Returns the monthly payment of the loan
+
+        Parameters
+        ----------
+        amt : float
+            Loan amount in dollars.
+        apr : float
+            Loan interest rate percentage.
+        term : int
+            Loan term in months.
 
         Returns
         -------
-        None.
+        float
+            Payment amount in dollars.
 
         """
-        #initialization
-        self._name = name
-        self._Pv = 0
-        self._rateAPR = 0
-        self._Pmt = 0
-        self._nMonths=0
-        
-        
-    def getName(self):
-        print(f"\nname on this instance: {self._name}")
+        return np.round(apr / 1200 * amt / (1 - (1 + (apr / 1200 )) ** (-term)), 2)
     
-    def getChoice(self):
-        print("\nwhat would you like to compute?")
-        print("options: Pmt, Pv, rateAPR, nMonths")
-        
-        choice = 0
-        
-        while choice  not in ("Pmt", "Pv", "rateAPR", "nMonths"):
-            choice = input("enter choice ")
-            
-        if choice == "Pmt":
-            self.getPmt()
-        elif choice == 'Pv':
-            self.getPv()
-        elif choice == 'rateAPR':
-            self.getIntRate()
-        else:
-            self.get_nMonths()
+    def compute_nMonths(self, amt, pmt, apr):
+        """
+        Returns the calculated loan term
 
+        Parameters
+        ----------
+        amt : float
+            Loan amount in dollars.
+        pmt : float
+            Payment amount in dollars.
+        apr : float
+            Loan interest rate percentage.
 
-    def getIntRate(self):
-        ''' Solve for interest rate, APR  '''
-        self._Pv = float(input('Enter PV '))
-        self._Pmt = float(input('Enter Pmt '))
-        self._nMonths = int(input('Enter number of months '))
-        
+        Returns
+        -------
+        int
+            Loan term in months.
+
+        """
+        return math.ceil(-np.log(1 - (amt * (apr / 1200) / pmt)) / np.log(1 + (apr / 1200)))
+    
+    def compute_PV(self, pmt, apr, term):
+        """
+        Returns the computed loan amount
+
+        Parameters
+        ----------
+        pmt : float
+            Payment amount in dollars.
+        apr : float
+            Loan interest rate percentage.
+        term : int
+            Loan term in months.
+
+        Returns
+        -------
+        float
+            Loan amount in dollars.
+
+        """
+        return math.floor((pmt * 1200 * (-(apr/1200+1)**-term + 1 )) / apr)
+
+    def compute_intAPR(self, amt, pmt, term):       
+        """
+        Returns the computed loan interest rate
+
+        Parameters
+        ----------
+        amt : float
+            Loan amount in dollars.
+        pmt : float
+            Payment amount in dollars.
+        term : int
+            Loan term in months.
+
+        Returns
+        -------
+        float
+            Loan interest rate percentage.
+
+        """
         # The solution will be r where using Pmt, n, and Pv works
         ## bisection algorithm finds the two sides of the equation are equal
         ## that is, the difference is 0
@@ -65,17 +113,14 @@ class loanpy(object):
         ## side 2:  Pv*r
         
         #example of an in-line (lambda) function
-        fIntRate = lambda r: self._Pmt*(1-(1+r)**(-self._nMonths)) - self._Pv*r
+        fIntRate = lambda r: pmt*(1-(1+r)**(-term)) - amt*r
         
         # low and high possible interest rates, APR
         # the actual rate is between 
         
-        _rlow =0
-        _rhigh = 50 
-        
-        _rl = _rlow/1200
-        _rh = _rhigh/1200
-        _count = 0
+        _rlow, _rhigh = 0, 50
+        _rl, _rh      = _rlow/1200, _rhigh/1200
+        _count        = 0
         
         while(_count < 20): # in case there is no solution
             _rTry = (_rl+_rh)/2
@@ -86,67 +131,61 @@ class loanpy(object):
             
             _count += 1
             
-        if(_count >=20):
-            print("no solution: try again")
-            print(f"interest rate APR is > {_rTry*1200:.2f}%") # convert back to APR
-            rTry = None
+        if(_count >= 20):
+            return None
         
-        print(f"Interest rate is {_rTry*1200:.2f}%")
-    
+        return np.round(_rTry*1200, 2)
 
-    def getPmt(self):
-        self._Pv = float(input("Enter Loan Amount: "))        
-        self._rateAPR = float(input("Enter APR: "))
-        self._nMonths = int(input("Enter Months: "))
+              
 
-        self._Pmt = self._rateAPR / 1200 * self._Pv / (1 - (1 + (self._rateAPR / 1200 )) ** (-self._nMonths))
-        print(f"Your monthly payments will be ${self._Pmt:,.2f}")
-        pass
-    
-    
-    
-    def get_nMonths(self):
-        # formula: nMonths = -np.log(1 - (self._Pv * _r / self._Pmt)) / np.log(1 + _r)
-        self._rateAPR = float(input("Enter APR: "))
-        self._Pv = int(input("Enter Loan Amount: "))
-        self._Pmt = float(input("Enter Monthly Pmt: "))
-        
-        _r = self._rateAPR / 1200
-        
-        self._nMonths = -np.log(1 - (self._Pv * _r / self._Pmt)) / np.log(1 + _r)
-        print(f"It will take you {math.ceil(self._nMonths)} months to pay off that loan.")
-        pass
-    
-    
-    def getPv(self):
-        self._rateAPR = float(input("Enter APR: "))
-        self._nMonths = int(input("Enter Months: "))
-        self._Pmt = float(input("Enter Pmt: "))
-        
-        Amt = (self._Pmt * 1200 * (-(self._rateAPR/1200+1)**-self._nMonths + 1 )) / self._rateAPR
-        print(f"Loan amount is ${Amt:,.2f}")
-        pass
+def getValues(inputs):
+    ret_vals = {}
+    for inp in inputs:
+        if inp == 'amt':
+            ret_vals['amt']  = float(input('Enter loan amount: '))
+        elif inp == 'pmt':
+            ret_vals['pmt']  = float(input('Enter payment amount: '))
+        elif inp == 'apr':
+            ret_vals['apr']  = float(input('Enter interest rate(%): '))
+        elif inp == 'term':
+            ret_vals['term'] = int(input('Enter loan term: '))
+            
+    return ret_vals
 
+#######################################################################################################
+# Main loop creates object lp of class loanpy and uses the class's functions to calculate loan variables
+########################################################################################################
+# lp.compute_Pmt(amt, apr, term)
+# lp.compute_PV(pmt, apr, term)
+# lp.compute_nMonths(amt, pmt, apr)
+# lp.compute_intAPR(amt, pmt, term)
 
-#####################################################################     
-  
 if __name__ == '__main__':
-    
-    testloan = loanpy('car')
-    testloan.getName()
-    
-    testloan.getChoice()
+    lp = loanpy()
+    while True:
+        print("\n\nPlease pick an loan item to calculate(Pmt, PV, intAPR, nMonths)")
+        ch = input('choice> ')
+        
+        if ch == 'Pmt':
+            vals = getValues(['amt', 'apr', 'term'])            
+            pmt = lp.compute_Pmt(amt = vals['amt'], apr = vals['apr'], term = vals['term'])
+            print(f'The calculated payment is ${pmt:.2f}/month.')
+            
+        elif ch == 'PV':
+            vals = getValues(['pmt','apr','term'])
+            pv = lp.compute_PV(pmt = vals['pmt'], apr = vals['apr'], term = vals['term'])
+            print(f'The calculated loan amount is: ${pv:.2f}.')
 
-
-
-"""
-APR = 10.0   # apr
-Term = 48     # term
-
-print(f'APR={APR}, Term={Term}')
-
-Pmt = int(input('Payment amount -->'))
-Amt = (Pmt * 1200 * (-(APR/1200+1)**-Term + 1 )) / APR
-
-print(f"loan amt={Amt}")
-"""
+        elif ch == 'nMonths':
+            vals = getValues(['amt', 'pmt', 'apr'])
+            term = lp.compute_nMonths(amt = vals['amt'], pmt = vals['pmt'], apr = vals['apr'])
+            print(f'The calculated number of months is {term} months.')        
+            
+        elif ch == 'intAPR':
+            vals = getValues(['amt', 'pmt', 'term'])
+            apr = lp.compute_intAPR(amt = vals['amt'], pmt = vals['pmt'], term = vals['term'])
+            if apr == None:
+                print('error: could not calculate interest rate..')
+            else:
+                print(f'The calculated interest rate is {apr:.2f}%.')
+        
